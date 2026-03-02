@@ -123,8 +123,8 @@
 
   <div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-<script src="./chess.js"></script>
 
+<!-- Firebase initialization and shared sync setup -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
@@ -164,7 +164,10 @@
     };
   </script>
 
+<!-- Main chess logic, UI, accessibility, and rules -->
   <script type="module">
+    import Chess from "https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/esm/chess.js";
+
     const boardBody = document.getElementById("boardBody");
     const statusEl = document.getElementById("status");
     const liveEl = document.getElementById("live");
