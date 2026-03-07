@@ -1,828 +1,1136 @@
 <!doctype html>
-	<html lang="en">
+<html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dad and Josept></title>
-  <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 16px; }
-    .controls { margin: 12px 0; display: flex; gap: 8px; flex-wrap: wrap; }
-    .help { margin-top: 10px; max-width: 720px; }
-    .panel { margin-top: 12px; }
+  <title>Dad and Joseph Chess</title>
 
-    table#board {
-      border-collapse: separate;
-      border-spacing: 3px;
-      margin-top: 12px;
+  <style>
+    :root {
+      --page-bg: #ffffff;
+      --page-text: #000000;
+      --panel-bg: #ffffff;
+      --panel-border: #555555;
+
+      --sq-size: 80px;
+      --sq-gap: 6px;
+      --sq-radius: 10px;
+
+      --sq-light: rgb(230, 207, 168);
+      --sq-dark: rgb(156, 111, 74);
+
+      --focus-outline: #000000;
+      --focus-outline-w: 4px;
+
+      --piece-scale: 0.80;
+
+      --btn-bg: #ffffff;
+      --btn-text: #000000;
+      --btn-border: #555555;
     }
 
-    table#board td { padding: 0; }
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      margin: 16px;
+      background: var(--page-bg);
+      color: var(--page-text);
+    }
 
-    .sq {
-      width: 80px;
-      height: 80px;
-      border: 1px solid #555;
-      border-radius: 8px;
-      font-size: 40px;
-      line-height: 1;
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .row label {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input[type="text"] {
+      padding: 8px 10px;
+      border: 1px solid var(--btn-border);
+      border-radius: 10px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      min-width: 200px;
+    }
+
+    button {
+      padding: 8px 10px;
+      border: 1px solid var(--btn-border);
+      border-radius: 10px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .layout {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .board {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sq-gap);
+      margin-top: 6px;
+    }
+
+    .boardRow {
+      display: grid;
+      grid-template-columns: repeat(8, var(--sq-size));
+      gap: var(--sq-gap);
+    }
+
+    .sqbtn {
+      width: var(--sq-size);
+      height: var(--sq-size);
       padding: 0;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--sq-radius);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-sizing: border-box;
-      background: #f0d9b5;
+      background: #ffffff;
+      color: #000000;
     }
 
-    .sq.dark { background: #b58863; }
-    .sq:focus { outline: 3px solid #000; outline-offset: 2px; }
+    .light {
+      background: var(--sq-light);
+    }
 
-    .piece-w { color: #ffffff; text-shadow: 0 0 3px #000; }
-    .piece-b { color: #000000; }
+    .dark {
+      background: var(--sq-dark);
+    }
 
-    .piece {
-      font-family: "Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols","Arial Unicode MS",sans-serif;
+    .sqbtn:focus {
+      outline: var(--focus-outline-w) solid var(--focus-outline);
+      outline-offset: 2px;
+    }
+
+    .picked {
+      box-shadow: inset 0 0 0 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .pieceimg {
+      width: calc(var(--sq-size) * var(--piece-scale));
+      height: calc(var(--sq-size) * var(--piece-scale));
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      background: var(--panel-bg);
+      max-width: 760px;
+    }
+
+    .panel {
+      min-width: 280px;
+      max-width: 520px;
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      background: var(--panel-bg);
+    }
+
+    .panel h2 {
+      font-size: 18px;
+      margin: 6px 0 10px 0;
+    }
+
+    .panel ol {
+      margin: 6px 0 0 18px;
+      padding: 0;
+    }
+
+    .accessMenu {
+      margin-bottom: 10px;
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      background: var(--panel-bg);
+      padding: 10px 12px;
+    }
+
+    .accessMenu > summary {
+      cursor: pointer;
+      padding: 6px 2px;
+    }
+
+    .accessMenu[open] > summary {
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      margin-top: 10px;
+      line-height: 1.35;
     }
 
     .sr-only {
       position: absolute;
+      left: -9999px;
       width: 1px;
       height: 1px;
-      padding: 0;
-      margin: -1px;
       overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
     }
-
-    fieldset { border: 1px solid #bbb; border-radius: 10px; padding: 10px; max-width: 720px; }
-    legend { padding: 0 6px; }
-    .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
-    label { cursor: pointer; }
-
-    input[type="text"] { padding: 6px 8px; font-size: 16px; }
-    button { padding: 8px 10px; font-size: 16px; }
   </style>
-</head>
-<body>
-  <h1>International Contest></h1>
 
-  <fieldset class="panel" aria-describedby="roomHelp">
-    <legend>Room</legend>
-    <div class="row">
-      <label for="roomInput">Room number</label>
-      <input id="roomInput" type="text" inputmode="numeric" autocomplete="off" aria-label="Room number" />
-      <button id="joinRoomBtn" type="button">Join room</button>
-    </div>
-    <div id="roomHelp" class="help">
-      Use the same room number on both devices to sync the same game. You can switch rooms at any time.
-    </div>
-  </fieldset>
-
-  <fieldset class="panel" aria-describedby="colorHelp">
-    <legend>Choose your color</legend>
-    <div class="row">
-      <label><input type="radio" name="color" id="colorWhite" value="w"> Play as White</label>
-      <label><input type="radio" name="color" id="colorBlack" value="b"> Play as Black</label>
-    </div>
-    <div id="colorHelp" class="help">
-      Your chosen color is always shown at the bottom of the board. The opponent is shown at the top.
-      Once you make the first move, the perspective is locked until you start a new game.
-      The game auto-saves on this computer after each move.
-    </div>
-  </fieldset>
-
-  <div class="controls">
-    <button id="newGameBtn" type="button">New game</button>
-    <button id="focusBoardBtn" type="button">Focus board</button>
-  </div>
-
-  <div class="help" id="instructions">
-    Keyboard: Arrow keys move square to square. Space picks up or drops. Escape cancels pick up.
-  </div>
-
-  <div id="status">Ready.</div>
-
-  <div id="boardWrap" aria-label="Chessboard area">
-    <table
-      id="board"
-      role="grid"
-      aria-label="Chessboard"
-      aria-describedby="instructions"
-      aria-rowcount="8"
-      aria-colcount="8"
-    >
-      <tbody id="boardBody"></tbody>
-    </table>
-  </div>
-
-  <div class="panel">
-    <div id="movesTitle">Moves</div>
-    <ol id="moves" aria-labelledby="movesTitle"></ol>
-  </div>
-
-  <div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-
-
-<!-- Firebase initialization and shared sync setup -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyB40rhsHF2i7IDnM5rKRF2PJZwsGrtJihg",
-      authDomain: "familychest-55658.firebaseapp.com",
-      databaseURL: "https://familychest-55658-default-rtdb.firebaseio.com",
-      projectId: "familychest-55658",
-      storageBucket: "familychest-55658.firebasestorage.app",
-      messagingSenderId: "510129660169",
-      appId: "1:510129660169:web:93cc1086dce6b9034bf3d8"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    function sanitizeRoom(raw) {
-      const digits = String(raw || "").replace(/[^0-9]/g, "").slice(0, 12);
-      return digits || "1";
-    }
-
-    const initialRoom = sanitizeRoom((location.hash || "#1").slice(1).trim());
-
-    const clientId =
-      (crypto.randomUUID && crypto.randomUUID()) ||
-      (String(Date.now()) + "-" + String(Math.random()).slice(2));
-
-    window.chessSync = {
-      db,
-      roomId: initialRoom,
-      clientId,
-      makeRef: (roomId) => ref(db, "games/" + roomId),
-      set,
-      onValue,
-      sanitizeRoom
-    };
+  <script>
+    window.exports = window.exports || {};
   </script>
 
-<!-- Main chess logic, UI, accessibility, and rules -->
-  <script type="module">
-    import{Chess}from"https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/esm/chess.js";
-    const game = new Chess();
-    const boardBody = document.getElementById("boardBody");
-    const statusEl = document.getElementById("status");
-    const liveEl = document.getElementById("live");
-    const movesEl = document.getElementById("moves");
+  <script src="chess.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-    const colorWhite = document.getElementById("colorWhite");
-    const colorBlack = document.getElementById("colorBlack");
-
-    const roomInput = document.getElementById("roomInput");
-    const joinRoomBtn = document.getElementById("joinRoomBtn");
-
-    const FILES = ["a","b","c","d","e","f","g","h"];
-    const RANKS = [8,7,6,5,4,3,2,1];
-
-    const SAVE_KEY = "icc_chess_save_v1";
-
-    const sync = window.chessSync;
-
-    let applyingRemote = false;
-    let unsubscribeRoom = null;
-
-    function pieceToText(p) {
-      if (!p) return "";
-      const color = p[0] === "w" ? "white" : "black";
-      const type = p[1];
-      const name =
-        type === "K" ? "king" :
-        type === "Q" ? "queen" :
-        type === "R" ? "rook" :
-        type === "B" ? "bishop" :
-        type === "N" ? "knight" :
-        "pawn";
-      return color + " " + name;
+  <script>
+    if (!window.Chess && window.exports && window.exports.Chess) {
+      window.Chess = window.exports.Chess;
     }
+  </script>
+</head>
 
-    function pieceToSymbol(p) {
-      if (!p) return "";
-      const type = p[1];
-      const mapByType = {
-        K: "♚",
-        Q: "♛",
-        R: "♜",
-        B: "♝",
-        N: "♞",
-        P: "♟"
+<body>
+  <div class="row">
+    <label for="roomInput">Room</label>
+    <input id="roomInput" type="text" inputmode="numeric" autocomplete="off" aria-describedby="roomHelp" />
+
+    <label for="colorSel">Color</label>
+    <select id="colorSel">
+      <option value="w" selected>White</option>
+      <option value="b">Black</option>
+    </select>
+
+    <button id="joinBtn" type="button">Join</button>
+    <button id="leaveBtn" type="button" disabled>Leave room</button>
+    <button id="focusBoardBtn" type="button" disabled>Focus board</button>
+    <button id="newGameBtn" type="button" disabled>New game</button>
+  </div>
+
+  <div id="roomHelp" class="sr-only">
+    Enter a room number using digits only, then activate Join. The board stays locked until you join.
+  </div>
+
+  <div class="layout">
+    <div>
+      <div id="board" class="board" role="grid" aria-label="Chess board"></div>
+
+      <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true">
+        Enter a room number and activate Join. Then use Focus board. Arrow keys move. Space picks up and places.
+      </div>
+    </div>
+
+    <div class="panel">
+      <details id="accessMenu" class="accessMenu">
+        <summary id="accessSummary">User settings</summary>
+
+        <div class="row" style="margin-top:10px;">
+          <label>
+            Invert page
+            <input id="invertToggle" type="checkbox" />
+          </label>
+
+          <label>
+            Contrast
+            <select id="contrastSel">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+
+          <label>
+            Square size
+            <select id="sqSizeSel">
+              <option value="64">Small</option>
+              <option value="80" selected>Medium</option>
+              <option value="96">Large</option>
+            </select>
+          </label>
+
+          <label>
+            Piece size
+            <select id="pieceSizeSel">
+              <option value="0.72">Small</option>
+              <option value="0.80" selected>Medium</option>
+              <option value="0.88">Large</option>
+            </select>
+          </label>
+
+          <label>
+            Audio
+            <select id="soundSel">
+              <option value="on" selected>On</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+        </div>
+      </details>
+
+      <h2>Moves</h2>
+      <ol id="moves"></ol>
+
+      <div class="hint">
+        Keyboard help. Arrow keys move square focus. Space or Enter picks up and places. Escape cancels pickup. Tab moves to controls.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const firebaseConfig = {
+        apiKey: "AIzaSyB40rhsHF2i7IDnM5rKRF2PJZwsGrtJihg",
+        authDomain: "familychest-55658.firebaseapp.com",
+        databaseURL: "https://familychest-55658-default-rtdb.firebaseio.com",
+        projectId: "familychest-55658",
+        storageBucket: "familychest-55658.firebasestorage.app",
+        messagingSenderId: "510129660169",
+        appId: "1:510129660169:web:93cc1086dce6b9034bf3d8"
       };
-      return mapByType[type] || "";
-    }
 
-    function coordText(actualR, actualC) {
-      return FILES[actualC] + RANKS[actualR];
-    }
-
-    function startPosition() {
-      return [
-        ["bR","bN","bB","bQ","bK","bB","bN","bR"],
-        ["bP","bP","bP","bP","bP","bP","bP","bP"],
-        [null,null,null,null,null,null,null,null],
-        [null,null,null,null,null,null,null,null],
-        [null,null,null,null,null,null,null,null],
-        [null,null,null,null,null,null,null,null],
-        ["wP","wP","wP","wP","wP","wP","wP","wP"],
-        ["wR","wN","wB","wQ","wK","wB","wN","wR"]
-      ];
-    }
-
-    function isValidBoard(b) {
-      if (!Array.isArray(b) || b.length !== 8) return false;
-      for (let r = 0; r < 8; r++) {
-        if (!Array.isArray(b[r]) || b[r].length !== 8) return false;
+      if (!firebase.apps || firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
       }
-      return true;
-    }
 
-    function normalizeBoard(b) {
-      const base = startPosition();
-      if (!isValidBoard(b)) return base;
+      const db = firebase.database();
+      let game = null;
 
-      const out = Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => null));
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const v = b[r][c];
-          out[r][c] = (v === undefined) ? null : v;
+      if (!window.Chess) {
+        const statusElEarly = document.getElementById("status");
+        if (statusElEarly) {
+          statusElEarly.textContent = "Error: local chess.js did not load. The Join button will not work until chess.js loads. Check that the chess.js file exists in the same folder as this index.html file.";
         }
+        return;
       }
-      return out;
-    }
 
-    let myColor = (localStorage.getItem("myColor") === "b") ? "b" : "w";
+      game = new Chess();
 
-    let state = {
-      board: startPosition(),
-      focusDR: 7,
-      focusDC: 0,
-      pickedUp: null,
-      pickedFrom: null,
-      moveNumber: 1,
-      sideToMove: "w",
-      perspectiveLocked: false
-    };
+      const boardEl = document.getElementById("board");
+      const statusEl = document.getElementById("status");
+      const movesEl = document.getElementById("moves");
 
-    function setStatus(text) {
-      statusEl.textContent = text;
+      const roomInput = document.getElementById("roomInput");
+      const joinBtn = document.getElementById("joinBtn");
+      const leaveBtn = document.getElementById("leaveBtn");
+      const colorSel = document.getElementById("colorSel");
+      const focusBoardBtn = document.getElementById("focusBoardBtn");
+      const newGameBtn = document.getElementById("newGameBtn");
 
-      liveEl.textContent = "";
-      requestAnimationFrame(() => {
-        liveEl.textContent = text;
-      });
-    }
+      const invertToggle = document.getElementById("invertToggle");
+      const contrastSel = document.getElementById("contrastSel");
+      const sqSizeSel = document.getElementById("sqSizeSel");
+      const pieceSizeSel = document.getElementById("pieceSizeSel");
+      const soundSel = document.getElementById("soundSel");
 
-    function updateColorControls() {
-      const locked = !!state.perspectiveLocked;
-      colorWhite.disabled = locked;
-      colorBlack.disabled = locked;
-    }
-
-    function squareId(dr, dc) { return "sq-" + dr + "-" + dc; }
-    function getSquare(dr, dc) { return document.getElementById(squareId(dr, dc)); }
-
-    function toActual(dr, dc) {
-      if (myColor === "w") return { r: dr, c: dc };
-      return { r: 7 - dr, c: 7 - dc };
-    }
-
-    function toDisplay(ar, ac) {
-      if (myColor === "w") return { dr: ar, dc: ac };
-      return { dr: 7 - ar, dc: 7 - ac };
-    }
-
-    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-
-    function squareShadeText(dr, dc) {
-      const isDark = ((dr + dc) % 2) === 1;
-      return isDark ? "dark square" : "light square";
-    }
-
-    function buildSyncPayload(reason) {
-      return {
-        v: 1,
-        reason: reason || "update",
-        state: {
-          board: normalizeBoard(state.board),
-          focusDR: state.focusDR,
-          focusDC: state.focusDC,
-          moveNumber: state.moveNumber,
-          sideToMove: state.sideToMove,
-          perspectiveLocked: state.perspectiveLocked
-        },
-        moves: Array.from(movesEl.querySelectorAll("li")).map(li => li.textContent),
-        lastWriter: sync ? sync.clientId : "unknown",
-        updatedAt: Date.now()
+      const state = {
+        joined: false,
+        roomId: "",
+        playerColor: "w",
+        focusR: 7,
+        focusC: 0,
+        pickedFrom: null,
+        lastLocalWriteAt: 0,
+        lastRemoteUpdatedAt: 0,
+        sqBtns: null,
+        missingSvgCache: {}
       };
-    }
 
-    function currentRoomRef() {
-      if (!sync) return null;
-      return sync.makeRef(sync.roomId);
-    }
-
-    function pushToFirebase(reason) {
-      if (!sync) return;
-      if (applyingRemote) return;
-      const r = currentRoomRef();
-      if (!r) return;
-      const payload = buildSyncPayload(reason);
-      sync.set(r, payload).catch(() => {});
-    }
-
-    function applyPayloadToState(payload) {
-      if (!payload || payload.v !== 1) return;
-
-      if (payload.state && payload.state.board) {
-        state.board = normalizeBoard(payload.state.board);
-        state.focusDR = (typeof payload.state.focusDR === "number") ? clamp(payload.state.focusDR, 0, 7) : 7;
-        state.focusDC = (typeof payload.state.focusDC === "number") ? clamp(payload.state.focusDC, 0, 7) : 0;
-        state.pickedUp = null;
-        state.pickedFrom = null;
-        state.moveNumber = (typeof payload.state.moveNumber === "number") ? payload.state.moveNumber : 1;
-        state.sideToMove = (payload.state.sideToMove === "b") ? "b" : "w";
-        state.perspectiveLocked = !!payload.state.perspectiveLocked;
-      } else {
-        state.board = startPosition();
+      function nowMs() {
+        return Date.now();
       }
 
-      movesEl.innerHTML = "";
-      if (Array.isArray(payload.moves)) {
-        for (const t of payload.moves) {
+      function makePlayerId() {
+        const k = "dadj_chess_playerId";
+        let v = localStorage.getItem(k);
+        if (!v) {
+          v = String(nowMs()) + "_" + Math.random().toString(16).slice(2);
+          localStorage.setItem(k, v);
+        }
+        return v;
+      }
+
+      const playerId = makePlayerId();
+
+      function roomPath(roomId) {
+        return "rooms/" + roomId;
+      }
+
+      function getSeatRef(roomId, color) {
+        return db.ref(roomPath(roomId) + "/seats/" + color);
+      }
+
+      function getStateRef(roomId) {
+        return db.ref(roomPath(roomId) + "/state");
+      }
+
+      function setStatus(t) {
+        statusEl.textContent = t;
+      }
+
+      function soundsOn() {
+        return soundSel.value === "on";
+      }
+
+      function beepIllegal() {
+        if (!soundsOn()) return;
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = "sine";
+          o.frequency.value = 220;
+          g.gain.value = 0.08;
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start();
+          o.stop(ctx.currentTime + 0.12);
+          o.onended = () => {
+            try {
+              ctx.close();
+            } catch (e) {}
+          };
+        } catch (e) {}
+      }
+
+      function safeEnableJoinUI(enabled) {
+        joinBtn.disabled = !enabled;
+        roomInput.disabled = !enabled;
+        colorSel.disabled = !enabled;
+      }
+
+      function setBoardEnabled(enabled) {
+        state.joined = enabled;
+
+        focusBoardBtn.disabled = !enabled;
+        newGameBtn.disabled = !enabled;
+        leaveBtn.disabled = !enabled;
+
+        const buttons = boardEl.querySelectorAll("button.sqbtn");
+        buttons.forEach((b) => {
+          b.disabled = !enabled;
+          b.setAttribute("aria-disabled", (!enabled).toString());
+        });
+      }
+
+      function toActual(dr, dc) {
+        if (state.playerColor === "b") {
+          return { r: 7 - dr, c: 7 - dc };
+        }
+        return { r: dr, c: dc };
+      }
+
+      function toDisplay(r, c) {
+        if (state.playerColor === "b") {
+          return { dr: 7 - r, dc: 7 - c };
+        }
+        return { dr: r, dc: c };
+      }
+
+      function rcToSq(dr, dc) {
+        const a = toActual(dr, dc);
+        const files = "abcdefgh";
+        return files[a.c] + (8 - a.r);
+      }
+
+      function pieceName(type) {
+        if (type === "p") return "pawn";
+        if (type === "n") return "knight";
+        if (type === "b") return "bishop";
+        if (type === "r") return "rook";
+        if (type === "q") return "queen";
+        return "king";
+      }
+
+      function pieceToText(p) {
+        if (!p) return "empty";
+        const color = p.color === "w" ? "white" : "black";
+        return color + " " + pieceName(p.type);
+      }
+
+      function svgPathForPiece(p) {
+        if (!p) return "";
+        const prefix = p.color === "w" ? "w_" : "b_";
+        const name = pieceName(p.type);
+        return "svgs/" + prefix + name + ".svg";
+      }
+
+      function isLight(r, c) {
+        return ((r + c) % 2) === 0;
+      }
+
+      function squareAriaLabel(dr, dc) {
+        const sq = rcToSq(dr, dc);
+        const p = game.get(sq);
+
+        const a = toActual(dr, dc);
+        const colorText = isLight(a.r, a.c) ? "light square" : "dark square";
+
+        let t = pieceToText(p) + ". " + colorText + ". " + sq + ".";
+
+        if (state.pickedFrom) {
+          const fromD = toDisplay(state.pickedFrom.r, state.pickedFrom.c);
+          const fromSq = rcToSq(fromD.dr, fromD.dc);
+          t += " Picked up from " + fromSq + ".";
+        }
+
+        return t;
+      }
+
+      function renderMovesUIFromSAN(sanList) {
+        movesEl.innerHTML = "";
+        if (!Array.isArray(sanList)) return;
+
+        for (let i = 0; i < sanList.length; i++) {
           const li = document.createElement("li");
-          li.textContent = t;
+          li.textContent = sanList[i];
           movesEl.appendChild(li);
         }
       }
 
-      renderBoard();
-      updateColorControls();
-      focusSquare(state.focusDR, state.focusDC);
-    }
-
-    function resetToNewGameLocal() {
-      state.board = startPosition();
-      state.focusDR = 7;
-      state.focusDC = 0;
-      state.pickedUp = null;
-      state.pickedFrom = null;
-      state.moveNumber = 1;
-      state.sideToMove = "w";
-      state.perspectiveLocked = false;
-      movesEl.innerHTML = "";
-      renderBoard();
-      updateColorControls();
-      focusSquare(state.focusDR, state.focusDC);
-    }
-
-    function startFirebaseListener() {
-      if (!sync) return;
-
-      if (typeof unsubscribeRoom === "function") {
-        try { unsubscribeRoom(); } catch (e) {}
-        unsubscribeRoom = null;
-      }
-
-      const r = currentRoomRef();
-      if (!r) return;
-
-      let firstCallback = true;
-
-      unsubscribeRoom = sync.onValue(r, (snap) => {
-        const payload = snap.val();
-
-        if (!payload) {
-          if (firstCallback) {
-            applyingRemote = true;
-            try {
-              resetToNewGameLocal();
-              setStatus("Room " + sync.roomId + " is empty. New game started.");
-            } finally {
-              applyingRemote = false;
-            }
-            pushToFirebase("initial");
-          }
-          firstCallback = false;
-          return;
-        }
-
-        if (payload.v !== 1) {
-          firstCallback = false;
-          return;
-        }
-
-        if (payload.lastWriter === sync.clientId) {
-          firstCallback = false;
-          return;
-        }
-
-        applyingRemote = true;
-        try {
-          applyPayloadToState(payload);
-          setStatus("Synced from other player. Room " + sync.roomId + ".");
-        } finally {
-          applyingRemote = false;
-        }
-
-        firstCallback = false;
-      });
-    }
-
-    function saveGame() {
-      try {
-        const payload = {
-          v: 1,
-          myColor: myColor,
-          state: {
-            board: normalizeBoard(state.board),
-            focusDR: state.focusDR,
-            focusDC: state.focusDC,
-            moveNumber: state.moveNumber,
-            sideToMove: state.sideToMove,
-            perspectiveLocked: state.perspectiveLocked
-          },
-          moves: Array.from(movesEl.querySelectorAll("li")).map(li => li.textContent)
-        };
-        localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
-      } catch (e) {
-      }
-    }
-
-    function loadGame() {
-      try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        if (!raw) return false;
-        const payload = JSON.parse(raw);
-        if (!payload || payload.v !== 1) return false;
-
-        if (payload.myColor === "w" || payload.myColor === "b") {
-          myColor = payload.myColor;
-          localStorage.setItem("myColor", myColor);
-        }
-
-        if (payload.state && payload.state.board) {
-          state.board = normalizeBoard(payload.state.board);
-          state.focusDR = (typeof payload.state.focusDR === "number") ? clamp(payload.state.focusDR, 0, 7) : 7;
-          state.focusDC = (typeof payload.state.focusDC === "number") ? clamp(payload.state.focusDC, 0, 7) : 0;
-          state.pickedUp = null;
-          state.pickedFrom = null;
-          state.moveNumber = (typeof payload.state.moveNumber === "number") ? payload.state.moveNumber : 1;
-          state.sideToMove = (payload.state.sideToMove === "b") ? "b" : "w";
-          state.perspectiveLocked = !!payload.state.perspectiveLocked;
-        } else {
-          state.board = startPosition();
-        }
-
+      function renderMovesUI() {
         movesEl.innerHTML = "";
-        if (Array.isArray(payload.moves)) {
-          for (const t of payload.moves) {
-            const li = document.createElement("li");
-            li.textContent = t;
-            movesEl.appendChild(li);
+        const hist = game.history({ verbose: true });
+
+        for (let i = 0; i < hist.length; i++) {
+          const m = hist[i];
+          const li = document.createElement("li");
+          const mover = m.color === "w" ? "White" : "Black";
+          const piece = pieceName(m.piece);
+
+          let cap = "";
+          if (m.captured) {
+            cap = ", captures " + pieceName(m.captured);
+          }
+
+          li.textContent = mover + " " + piece + " from " + m.from + " to " + m.to + cap + ".";
+          movesEl.appendChild(li);
+        }
+      }
+
+      function renderBoard() {
+        if (!state.sqBtns) {
+          state.sqBtns = [];
+          boardEl.innerHTML = "";
+
+          boardEl.setAttribute("aria-rowcount", "8");
+          boardEl.setAttribute("aria-colcount", "8");
+
+          for (let r = 0; r < 8; r++) {
+            state.sqBtns[r] = [];
+
+            const rowEl = document.createElement("div");
+            rowEl.className = "boardRow";
+            rowEl.setAttribute("role", "row");
+            rowEl.setAttribute("aria-rowindex", String(r + 1));
+
+            for (let c = 0; c < 8; c++) {
+              const btn = document.createElement("button");
+              btn.type = "button";
+
+              const a = toActual(r, c);
+              btn.className = "sqbtn " + (isLight(a.r, a.c) ? "light" : "dark");
+              btn.dataset.r = String(r);
+              btn.dataset.c = String(c);
+              btn.setAttribute("role", "gridcell");
+              btn.setAttribute("aria-rowindex", String(r + 1));
+              btn.setAttribute("aria-colindex", String(c + 1));
+
+              btn.addEventListener("click", () => {
+                if (!state.joined) return;
+                state.focusR = r;
+                state.focusC = c;
+                focusCurrent();
+                handleActivate();
+              });
+
+              btn.addEventListener("keydown", (e) => {
+                if (!state.joined) return;
+
+                const k = e.key;
+
+                if (k === "ArrowUp" || k === "ArrowDown" || k === "ArrowLeft" || k === "ArrowRight") {
+                  e.preventDefault();
+                  moveFocusByKey(k);
+                  return;
+                }
+
+                if (k === " " || k === "Spacebar" || k === "Enter") {
+                  e.preventDefault();
+                  handleActivate();
+                  return;
+                }
+
+                if (k === "Escape") {
+                  e.preventDefault();
+                  cancelPickup();
+                  return;
+                }
+              });
+
+              rowEl.appendChild(btn);
+              state.sqBtns[r][c] = btn;
+            }
+
+            boardEl.appendChild(rowEl);
           }
         }
 
-        return true;
-      } catch (e) {
-        return false;
-      }
-    }
+        for (let dr = 0; dr < 8; dr++) {
+          for (let dc = 0; dc < 8; dc++) {
+            const btn = state.sqBtns[dr][dc];
+            const a = toActual(dr, dc);
+            const sq = rcToSq(dr, dc);
+            const p = game.get(sq);
 
-    function renderBoard() {
-      boardBody.innerHTML = "";
+            btn.className = "sqbtn " + (isLight(a.r, a.c) ? "light" : "dark");
+            btn.setAttribute("aria-label", squareAriaLabel(dr, dc));
 
-      for (let dr = 0; dr < 8; dr++) {
-        const tr = document.createElement("tr");
-        tr.setAttribute("role", "row");
+            if (state.pickedFrom && state.pickedFrom.r === a.r && state.pickedFrom.c === a.c) {
+              btn.classList.add("picked");
+            }
 
-        for (let dc = 0; dc < 8; dc++) {
-          const td = document.createElement("td");
+            btn.disabled = !state.joined;
+            btn.setAttribute("aria-disabled", (!state.joined).toString());
 
-          const a = toActual(dr, dc);
-          const row = state.board[a.r];
-          const piece = row ? row[a.c] : null;
+            const path = svgPathForPiece(p);
+            let img = btn.querySelector("img.pieceimg");
 
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "sq" + (((dr + dc) % 2) ? " dark" : "");
-          btn.id = squareId(dr, dc);
+            if (path) {
+              if (!img) {
+                img = document.createElement("img");
+                img.className = "pieceimg";
+                img.alt = "";
+                img.setAttribute("aria-hidden", "true");
+                img.setAttribute("draggable", "false");
+                img.onerror = function () {
+                  const failedSrc = this.getAttribute("src") || "";
+                  this.remove();
 
-const here = coordText(a.r, a.c);
-const pieceText = pieceToText(piece);
-const squareColor = ((dr + dc) % 2 === 1) ? "dark square" : "light square";
+                  if (!state.missingSvgCache[failedSrc]) {
+                    state.missingSvgCache[failedSrc] = true;
+                    setStatus("Piece image could not load: " + failedSrc + ".");
+                  }
+                };
+                btn.appendChild(img);
+              }
 
-let labelParts = [];
-
-if (pieceText) labelParts.push(pieceText);
-else labelParts.push("empty");
-
-labelParts.push(squareColor);
-labelParts.push(here);
-
-btn.setAttribute("aria-label", labelParts.join(", "));
-
-          btn.setAttribute("data-dr", String(dr));
-          btn.setAttribute("data-dc", String(dc));
-
-          btn.tabIndex = (dr === state.focusDR && dc === state.focusDC) ? 0 : -1;
-
-          const visual = document.createElement("span");
-          visual.setAttribute("aria-hidden", "true");
-          visual.textContent = pieceToSymbol(piece);
-
-          if (piece) {
-            visual.className = "piece " + ((piece[0] === "w") ? "piece-w" : "piece-b");
+              if (img.getAttribute("src") !== path) {
+                img.setAttribute("src", path);
+              }
+            } else {
+              if (img) img.remove();
+            }
           }
-
-          btn.appendChild(visual);
-
-          btn.addEventListener("click", () => {
-            focusSquare(dr, dc);
-            handleSpace();
-          });
-
-          btn.addEventListener("keydown", onSquareKeyDown);
-
-          td.appendChild(btn);
-          tr.appendChild(td);
         }
 
-        boardBody.appendChild(tr);
-      }
-    }
-
-    let lastFocusId = "";
-
-    function focusSquare(dr, dc) {
-      const id = squareId(dr, dc);
-      if (id === lastFocusId) return;
-      lastFocusId = id;
-
-      const oldBtn = getSquare(state.focusDR, state.focusDC);
-      if (oldBtn) oldBtn.tabIndex = -1;
-
-      state.focusDR = dr;
-      state.focusDC = dc;
-
-      const newBtn = getSquare(dr, dc);
-      if (newBtn) {
-        newBtn.tabIndex = 0;
-        newBtn.focus();
-      }
-    }
-
-    function onSquareKeyDown(e) {
-      const key = e.key;
-
-      if (key === "ArrowUp" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowRight") {
-        e.preventDefault();
-        let dr = state.focusDR;
-        let dc = state.focusDC;
-
-        if (key === "ArrowUp") dr -= 1;
-        if (key === "ArrowDown") dr += 1;
-        if (key === "ArrowLeft") dc -= 1;
-        if (key === "ArrowRight") dc += 1;
-
-        dr = clamp(dr, 0, 7);
-        dc = clamp(dc, 0, 7);
-
-        focusSquare(dr, dc);
-        return;
+        focusBoardBtn.disabled = !state.joined;
+        newGameBtn.disabled = !state.joined;
+        leaveBtn.disabled = !state.joined;
       }
 
-      if (key === " " || key === "Spacebar") {
-        e.preventDefault();
-        handleSpace();
-        return;
+      function focusCurrent() {
+        const sel = 'button.sqbtn[data-r="' + state.focusR + '"][data-c="' + state.focusC + '"]';
+        const el = boardEl.querySelector(sel);
+        if (el) el.focus();
       }
 
-      if (key === "Escape") {
-        e.preventDefault();
-        cancelPickUp();
-        return;
-      }
-    }
+      function moveFocusByKey(k) {
+        if (k === "ArrowUp") state.focusR = Math.max(0, state.focusR - 1);
+        if (k === "ArrowDown") state.focusR = Math.min(7, state.focusR + 1);
+        if (k === "ArrowLeft") state.focusC = Math.max(0, state.focusC - 1);
+        if (k === "ArrowRight") state.focusC = Math.min(7, state.focusC + 1);
 
-    function cancelPickUp() {
-      if (!state.pickedUp) {
-        setStatus("Ready.");
-        return;
-      }
-      state.pickedUp = null;
-      state.pickedFrom = null;
-      setStatus("Cancelled pick up.");
-      renderBoard();
-      focusSquare(state.focusDR, state.focusDC);
-    }
-
-    function announcePerspective() {
-      const msg = "Board set. You are " + (myColor === "w" ? "white" : "black") + ". Your pieces are at the bottom.";
-      setStatus(msg);
-    }
-
-    function applyColorChoice(chosen) {
-      if (state.perspectiveLocked) {
-        setStatus("Perspective is locked. Start a new game to change your color.");
-        if (myColor === "b") colorBlack.checked = true; else colorWhite.checked = true;
-        updateColorControls();
-        return;
-      }
-
-      myColor = chosen;
-      localStorage.setItem("myColor", chosen);
-
-      state.pickedUp = null;
-      state.pickedFrom = null;
-
-      state.focusDR = 7;
-      state.focusDC = 0;
-
-      renderBoard();
-      focusSquare(state.focusDR, state.focusDC);
-      announcePerspective();
-      updateColorControls();
-      saveGame();
-    }
-
-    function handleSpace() {
-      const a = toActual(state.focusDR, state.focusDC);
-      const r = a.r;
-      const c = a.c;
-
-      const row = state.board[r];
-      const targetPiece = row ? row[c] : null;
-
-      if (!state.pickedUp) {
-        if (!targetPiece) {
-          setStatus(coordText(r, c) + ".");
-          return;
-        }
-        if (targetPiece[0] !== state.sideToMove) {
-          setStatus("It is " + (state.sideToMove === "w" ? "white" : "black") + " to move.");
-          return;
-        }
-
-        state.pickedUp = targetPiece;
-        state.pickedFrom = { r, c };
-        setStatus("Picked up " + pieceToText(targetPiece) + " from " + coordText(r, c) + ".");
         renderBoard();
-        const d = toDisplay(r, c);
-        focusSquare(d.dr, d.dc);
-        return;
+        focusCurrent();
+
+        const sq = rcToSq(state.focusR, state.focusC);
+        const p = game.get(sq);
+        setStatus("Square " + sq + ". " + pieceToText(p) + ".");
       }
 
-      const from = state.pickedFrom;
+      function cancelPickup() {
+        if (!state.pickedFrom) {
+          setStatus("No piece picked up.");
+          return;
+        }
 
-      if (from.r === r && from.c === c) {
-        cancelPickUp();
-        return;
+        state.pickedFrom = null;
+        renderBoard();
+        focusCurrent();
+        setStatus("Canceled pickup.");
       }
 
-      const moving = state.pickedUp;
-      const capture = targetPiece && targetPiece[0] !== moving[0] ? targetPiece : null;
-      const illegalFriendly = targetPiece && targetPiece[0] === moving[0];
+      async function ensureRoomInitialized(roomId) {
+        const sref = getStateRef(roomId);
+        return sref.get().then((snap) => {
+          if (snap.exists()) return;
 
-      if (illegalFriendly) {
-        setStatus("That square has your own piece: " + pieceToText(targetPiece) + ".");
-        return;
+          const initState = {
+            fen: game.fen(),
+            history: [],
+            updatedAt: Date.now()
+          };
+
+          return sref.set(initState);
+        });
       }
 
-      state.board = normalizeBoard(state.board);
-      state.board[from.r][from.c] = null;
-      state.board[r][c] = moving;
+      function applyRemoteState(v) {
+        if (!v || !v.fen) return;
 
-      const moveText =
-        (state.sideToMove === "w" ? state.moveNumber + ". " : "") +
-        (moving[0] === "w" ? "White " : "Black ") +
-        pieceToText(moving).replace("white ", "").replace("black ", "") +
-        " from " + coordText(from.r, from.c) +
-        " to " + coordText(r, c) +
-        (capture ? (", captures " + pieceToText(capture)) : "");
+        const remoteUpdatedAt = typeof v.updatedAt === "number" ? v.updatedAt : 0;
 
-      const li = document.createElement("li");
-      li.textContent = moveText;
-      movesEl.appendChild(li);
+        if (remoteUpdatedAt && remoteUpdatedAt <= state.lastLocalWriteAt) {
+          return;
+        }
 
-      state.pickedUp = null;
-      state.pickedFrom = null;
+        const currentFen = game.fen();
+        if (currentFen === v.fen) {
+          state.lastRemoteUpdatedAt = remoteUpdatedAt;
+          return;
+        }
 
-      if (!state.perspectiveLocked) {
-        state.perspectiveLocked = true;
-        updateColorControls();
+        let ok = true;
+        try {
+          ok = game.load(v.fen);
+        } catch (e) {
+          ok = false;
+        }
+
+        if (ok === false) {
+          setStatus("Sync error. Invalid game state.");
+          return;
+        }
+
+        state.lastRemoteUpdatedAt = remoteUpdatedAt;
+        state.pickedFrom = null;
+        renderBoard();
+        renderMovesUIFromSAN(v.history || []);
+        setStatus("Remote move received.");
       }
 
-      if (state.sideToMove === "b") state.moveNumber += 1;
-      state.sideToMove = state.sideToMove === "w" ? "b" : "w";
+      function subscribeRoom(roomId) {
+        const sref = getStateRef(roomId);
+        sref.off();
+        sref.on("value", (snap) => {
+          const v = snap.val();
+          applyRemoteState(v);
+        });
+      }
 
-      setStatus(moveText + ".");
-      renderBoard();
-      const d2 = toDisplay(r, c);
-      focusSquare(d2.dr, d2.dc);
+      function unsubscribeRoom(roomId) {
+        if (!roomId) return;
+        getStateRef(roomId).off();
+      }
 
-      saveGame();
-      pushToFirebase("move");
+      function claimSeat(roomId, desiredColor) {
+        const seatRef = getSeatRef(roomId, desiredColor);
+
+        return seatRef.transaction((current) => {
+          if (current === null) return playerId;
+          if (current === playerId) return current;
+          return;
+        }).then((result) => {
+          if (result.committed && result.snapshot.val() === playerId) {
+            return desiredColor;
+          }
+          return null;
+        });
+      }
+
+      async function attachSeatRelease(roomId, color) {
+        const seatRef = getSeatRef(roomId, color);
+        await seatRef.onDisconnect().remove();
+      }
+
+      async function releaseSeat(roomId, color) {
+        if (!roomId || !color) return;
+
+        const seatRef = getSeatRef(roomId, color);
+
+        try {
+          const snap = await seatRef.get();
+          if (snap.val() === playerId) {
+            await seatRef.remove();
+          }
+        } catch (e) {}
+      }
+
+      async function pushStateToRoom(roomId) {
+        const writeAt = Date.now();
+        const data = {
+          fen: game.fen(),
+          history: game.history(),
+          updatedAt: writeAt
+        };
+
+        state.lastLocalWriteAt = writeAt;
+        await getStateRef(roomId).set(data);
+        return data;
+      }
+
+      function buildMoveStatus(result) {
+        const mover = result.color === "w" ? "White" : "Black";
+        const pName = pieceName(result.piece);
+
+        let capText = "";
+        if (result.captured) {
+          capText = ", captures " + pieceName(result.captured);
+        }
+
+        let extra = "";
+        if (game.isCheckmate()) {
+          extra = " Checkmate.";
+        } else if (game.isCheck()) {
+          extra = " Check.";
+        } else if (game.isStalemate()) {
+          extra = " Stalemate.";
+        }
+
+        return mover + " " + pName + " from " + result.from + " to " + result.to + capText + "." + extra;
+      }
+
+async function handleActivate() {
+  const r = state.focusR;
+  const c = state.focusC;
+  const sq = rcToSq(r, c);
+  const here = game.get(sq);
+
+  if (!state.pickedFrom) {
+    if (!here) {
+      setStatus("Square " + sq + ". Empty.");
+      return;
     }
 
-    colorWhite.addEventListener("change", () => {
-      if (colorWhite.checked) applyColorChoice("w");
-    });
-
-    colorBlack.addEventListener("change", () => {
-      if (colorBlack.checked) applyColorChoice("b");
-    });
-
-    document.getElementById("newGameBtn").addEventListener("click", () => {
-      state.board = startPosition();
-      state.focusDR = 7;
-      state.focusDC = 0;
-      state.pickedUp = null;
-      state.pickedFrom = null;
-      state.moveNumber = 1;
-      state.sideToMove = "w";
-      state.perspectiveLocked = false;
-      movesEl.innerHTML = "";
-      setStatus("New game. Choose your color.");
-      renderBoard();
-      focusSquare(state.focusDR, state.focusDC);
-      updateColorControls();
-      saveGame();
-      pushToFirebase("new_game");
-    });
-
-    document.getElementById("focusBoardBtn").addEventListener("click", () => {
-      focusSquare(state.focusDR, state.focusDC);
-    });
-
-    function syncRadioUI() {
-      if (myColor === "b") colorBlack.checked = true;
-      else colorWhite.checked = true;
+    if (here.color !== state.playerColor) {
+      setStatus("That piece is not yours.");
+      beepIllegal();
+      return;
     }
 
-    function switchRoom(newRoomRaw) {
-      if (!sync) return;
-
-      const newRoom = sync.sanitizeRoom(newRoomRaw);
-      if (newRoom === sync.roomId) {
-        setStatus("Already in room " + sync.roomId + ".");
-        return;
-      }
-
-      cancelPickUp();
-
-      sync.roomId = newRoom;
-
-      try {
-        history.replaceState(null, "", "#" + newRoom);
-      } catch (e) {
-        location.hash = newRoom;
-      }
-
-      roomInput.value = newRoom;
-
-      setStatus("Joining room " + newRoom + ".");
-      startFirebaseListener();
+    if (game.turn() !== state.playerColor) {
+      setStatus("Not your turn.");
+      beepIllegal();
+      return;
     }
 
-    joinRoomBtn.addEventListener("click", () => {
-      switchRoom(roomInput.value);
-    });
-
-    roomInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        switchRoom(roomInput.value);
-      }
-    });
-
-    const loaded = loadGame();
-
-    if (sync) {
-      roomInput.value = sync.roomId;
-      try { history.replaceState(null, "", "#" + sync.roomId); } catch (e) {}
-    }
-
-    syncRadioUI();
+    state.pickedFrom = { r, c };
     renderBoard();
-    updateColorControls();
+    focusCurrent();
+    setStatus("Picked up " + pieceToText(here) + " from " + sq + ".");
+    return;
+  }
 
-    startFirebaseListener();
+  const fromSq = rcToSq(state.pickedFrom.r, state.pickedFrom.c);
 
-    if (loaded) {
-      focusSquare(state.focusDR, state.focusDC);
-      setStatus("Game loaded. Room " + (sync ? sync.roomId : "") + ".");
-    } else {
-      focusSquare(state.focusDR, state.focusDC);
-      announcePerspective();
-      saveGame();
-      pushToFirebase("initial");
-    }
+  if (fromSq === sq) {
+    cancelPickup();
+    return;
+  }
+
+  if (!state.roomId) {
+    setStatus("Not connected to a room.");
+    beepIllegal();
+    return;
+  }
+
+  let result;
+
+  try {
+    result = game.move({ from: fromSq, to: sq, promotion: "q" });
+  } catch (e) {
+    setStatus("Illegal move from " + fromSq + " to " + sq + ".");
+    beepIllegal();
+    return;
+  }
+
+  state.pickedFrom = null;
+  renderBoard();
+  focusCurrent();
+  renderMovesUI();
+
+  const moveStatus = buildMoveStatus(result);
+  setStatus(moveStatus);
+
+  try {
+    await pushStateToRoom(state.roomId);
+  } catch (e) {
+    game.undo();
+    state.pickedFrom = null;
+    renderBoard();
+    renderMovesUI();
+    focusCurrent();
+    setStatus("Move could not be saved to Firebase, so it was undone locally.");
+    alert("Firebase write failed: " + (e && e.message ? e.message : String(e)));
+  }
+}
+
+      function applyDisplay() {
+        const root = document.documentElement;
+
+        const invert = invertToggle.checked;
+        const contrast = contrastSel.value;
+
+        const sqSize = parseInt(sqSizeSel.value, 10);
+        root.style.setProperty("--sq-size", sqSize + "px");
+        root.style.setProperty("--piece-scale", pieceSizeSel.value);
+
+        let pageBg = "#ffffff";
+        let pageText = "#000000";
+        let panelBg = "#ffffff";
+        let panelBorder = "#555555";
+        let focusOutline = "#000000";
+        let btnBg = "#ffffff";
+        let btnText = "#000000";
+        let btnBorder = "#555555";
+
+        let sqLight = "rgb(230, 207, 168)";
+        let sqDark = "rgb(156, 111, 74)";
+
+        if (contrast === "high") {
+          panelBorder = "#000000";
+          btnBorder = "#000000";
+          focusOutline = "#000000";
+        }
+
+        if (contrast === "low") {
+          panelBorder = "#777777";
+          btnBorder = "#777777";
+          focusOutline = "#333333";
+        }
+
+        if (invert) {
+          pageBg = "#000000";
+          pageText = "#ffffff";
+          panelBg = "#000000";
+          panelBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
+          focusOutline = "#ffffff";
+          btnBg = "#000000";
+          btnText = "#ffffff";
+          btnBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
+
+          if (contrast === "high") {
+            sqLight = "rgb(190, 160, 120)";
+            sqDark = "rgb(80, 50, 30)";
+          } else if (contrast === "low") {
+            sqLight = "rgb(170, 145, 110)";
+            sqDark = "rgb(120, 90, 60)";
+          } else {
+            sqLight = "rgb(200, 170, 130)";
+            sqDark = "rgb(120, 85, 55)";
+          }
+        }
+
+        root.style.setProperty("--page-bg", pageBg);
+        root.style.setProperty("--page-text", pageText);
+        root.style.setProperty("--panel-bg", panelBg);
+        root.style.setProperty("--panel-border", panelBorder);
+        root.style.setProperty("--focus-outline", focusOutline);
+        root.style.setProperty("--btn-bg", btnBg);
+        root.style.setProperty("--btn-text", btnText);
+        root.style.setProperty("--btn-border", btnBorder);
+        root.style.setProperty("--sq-light", sqLight);
+        root.style.setProperty("--sq-dark", sqDark);
+
+        renderBoard();
+      }
+
+      async function leaveCurrentRoom() {
+        const oldRoomId = state.roomId;
+        const oldColor = state.playerColor;
+
+        unsubscribeRoom(oldRoomId);
+        await releaseSeat(oldRoomId, oldColor);
+
+        game.reset();
+        state.roomId = "";
+        state.playerColor = "w";
+        state.focusR = 7;
+        state.focusC = 0;
+        state.pickedFrom = null;
+        state.lastLocalWriteAt = 0;
+        state.lastRemoteUpdatedAt = 0;
+
+        safeEnableJoinUI(true);
+        setBoardEnabled(false);
+        renderBoard();
+        renderMovesUI();
+        roomInput.focus();
+        setStatus("Left room. Type a room number and activate Join.");
+      }
+
+      focusBoardBtn.addEventListener("click", () => {
+        if (!state.joined) {
+          setStatus("Enter a room number and join first.");
+          roomInput.focus();
+          return;
+        }
+
+        renderBoard();
+        focusCurrent();
+
+        const sq = rcToSq(state.focusR, state.focusC);
+        const p = game.get(sq);
+        setStatus("Square " + sq + ". " + pieceToText(p) + ".");
+      });
+
+      newGameBtn.addEventListener("click", async () => {
+        if (!state.joined) {
+          setStatus("Enter a room number and join first.");
+          roomInput.focus();
+          return;
+        }
+
+        game.reset();
+        state.focusR = 7;
+        state.focusC = 0;
+        state.pickedFrom = null;
+        renderBoard();
+        renderMovesUI();
+        focusCurrent();
+
+        try {
+          await pushStateToRoom(state.roomId);
+          setStatus("New game. White to move.");
+        } catch (e) {
+          setStatus("New game could not be saved to Firebase.");
+          alert("Firebase write failed: " + (e && e.message ? e.message : String(e)));
+        }
+      });
+
+      leaveBtn.addEventListener("click", async () => {
+        if (!state.joined) {
+          setStatus("You are not in a room.");
+          return;
+        }
+
+        try {
+          await leaveCurrentRoom();
+        } catch (e) {
+          setStatus("Leave room failed.");
+        }
+      });
+
+      invertToggle.addEventListener("change", applyDisplay);
+      contrastSel.addEventListener("change", applyDisplay);
+      sqSizeSel.addEventListener("change", applyDisplay);
+      pieceSizeSel.addEventListener("change", applyDisplay);
+      soundSel.addEventListener("change", () => {});
+
+      joinBtn.addEventListener("click", async () => {
+        const raw = (roomInput.value || "").trim();
+
+        if (!raw) {
+          setStatus("Please enter a room number.");
+          roomInput.focus();
+          return;
+        }
+
+        if (!/^\d+$/.test(raw)) {
+          setStatus("Room number must contain digits only.");
+          roomInput.focus();
+          return;
+        }
+
+        safeEnableJoinUI(false);
+
+        try {
+          state.roomId = raw;
+
+          const desired = colorSel.value === "b" ? "b" : "w";
+
+          await ensureRoomInitialized(raw);
+
+          const seated = await claimSeat(raw, desired);
+          if (!seated) {
+            state.roomId = "";
+            safeEnableJoinUI(true);
+            setStatus("That color is already taken in this room.");
+            return;
+          }
+
+          state.playerColor = seated;
+          await attachSeatRelease(raw, seated);
+
+          const roomSnap = await getStateRef(raw).get();
+          const roomVal = roomSnap.val();
+
+          if (roomVal && roomVal.fen) {
+            let ok = true;
+            try {
+              ok = game.load(roomVal.fen);
+            } catch (e) {
+              ok = false;
+            }
+
+            if (ok !== false) {
+              state.lastRemoteUpdatedAt = typeof roomVal.updatedAt === "number" ? roomVal.updatedAt : 0;
+              state.pickedFrom = null;
+              renderBoard();
+              renderMovesUIFromSAN(roomVal.history || []);
+            }
+          }
+
+          subscribeRoom(raw);
+
+          setBoardEnabled(true);
+          renderBoard();
+
+          setStatus(
+            "Joined room " + raw +
+            ". You are " +
+            (state.playerColor === "w" ? "white" : "black") +
+            ". Activate Focus board to begin."
+          );
+
+          focusBoardBtn.focus();
+        } catch (e) {
+          try {
+            await releaseSeat(state.roomId, state.playerColor);
+          } catch (seatErr) {}
+
+          state.roomId = "";
+          safeEnableJoinUI(true);
+          setStatus("Join failed. Check Firebase database rules.");
+        }
+      });
+
+      window.addEventListener("beforeunload", () => {
+        if (state.roomId) {
+          try {
+            getSeatRef(state.roomId, state.playerColor).onDisconnect().remove();
+          } catch (e) {}
+        }
+      });
+
+      renderBoard();
+      setBoardEnabled(false);
+      setStatus("Ready. Type a room number and activate Join.");
+      roomInput.value = "";
+      roomInput.focus();
+    });
   </script>
 </body>
+
 </html>
