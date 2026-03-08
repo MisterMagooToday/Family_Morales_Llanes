@@ -8,7 +8,26 @@
 
   <style>
     :root {
-      --page-bg: #ffffff;
+
+      --page-bg: rgb(238, 232, 213);
+
+      --color-white: rgb(255, 255, 255);
+      --color-soft-white: rgb(245, 245, 245);
+      --color-black: rgb(0, 0, 0);
+      --color-charcoal: rgb(40, 40, 40);
+      --color-light-gray: rgb(230, 230, 230);
+      --color-medium-gray: rgb(160, 160, 160);
+      --color-dark-gray: rgb(60, 60, 60);
+
+      --color-soft-beige: rgb(238, 232, 213);
+      --color-warm-sand: rgb(240, 220, 180);
+      --color-light-wood: rgb(230, 207, 168);
+      --color-dark-wood: rgb(156, 111, 74);
+      --color-walnut: rgb(120, 80, 50);
+
+      --color-blue-gray: rgb(210, 220, 230);
+      --color-dark-navy: rgb(17, 23, 42);
+
       --page-text: #000000;
       --panel-bg: #ffffff;
       --panel-border: #555555;
@@ -173,12 +192,12 @@
       padding: 10px 12px;
     }
 
-    .accessMenu > summary {
+    .accessMenu>summary {
       cursor: pointer;
       padding: 6px 2px;
     }
 
-    .accessMenu[open] > summary {
+    .accessMenu[open]>summary {
       margin-bottom: 6px;
     }
 
@@ -224,7 +243,6 @@
 
     <button id="joinBtn" type="button">Join</button>
     <button id="leaveBtn" type="button" disabled>Leave room</button>
-    <button id="focusBoardBtn" type="button" disabled>Focus board</button>
     <button id="newGameBtn" type="button" disabled>New game</button>
   </div>
 
@@ -237,7 +255,7 @@
       <div id="board" class="board" role="grid" aria-label="Chess board"></div>
 
       <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true">
-        Enter a room number and activate Join. Then use Focus board. Arrow keys move. Space picks up and places.
+        Enter a room number and activate Join. Arrow keys move on the board. Space picks up and places.
       </div>
     </div>
 
@@ -279,7 +297,20 @@
           </label>
 
           <label>
+            Page background
+            <select id="pageBgSel">
+              <option value="beige" selected>Soft beige</option>
+              <option value="white">White</option>
+              <option value="lightgray">Light gray</option>
+              <option value="bluegray">Blue gray</option>
+              <option value="darknavy">Dark navy</option>
+              <option value="black">Black</option>
+            </select>
+          </label>
+
+          <label>
             Audio
+
             <select id="soundSel">
               <option value="on" selected>On</option>
               <option value="off">Off</option>
@@ -292,7 +323,8 @@
       <ol id="moves"></ol>
 
       <div class="hint">
-        Keyboard help. Arrow keys move square focus. Space or Enter picks up and places. Escape cancels pickup. Tab moves to controls.
+        Keyboard help. Arrow keys move square focus. Space or Enter picks up and places. Escape cancels pickup. Tab
+        moves to controls.
       </div>
     </div>
   </div>
@@ -334,16 +366,17 @@
       const joinBtn = document.getElementById("joinBtn");
       const leaveBtn = document.getElementById("leaveBtn");
       const colorSel = document.getElementById("colorSel");
-      const focusBoardBtn = document.getElementById("focusBoardBtn");
       const newGameBtn = document.getElementById("newGameBtn");
 
       const invertToggle = document.getElementById("invertToggle");
       const contrastSel = document.getElementById("contrastSel");
       const sqSizeSel = document.getElementById("sqSizeSel");
       const pieceSizeSel = document.getElementById("pieceSizeSel");
+      const pageBgSel = document.getElementById("pageBgSel");
       const soundSel = document.getElementById("soundSel");
 
       const state = {
+
         joined: false,
         roomId: "",
         playerColor: "w",
@@ -408,9 +441,9 @@
           o.onended = () => {
             try {
               ctx.close();
-            } catch (e) {}
+            } catch (e) { }
           };
-        } catch (e) {}
+        } catch (e) { }
       }
 
       function safeEnableJoinUI(enabled) {
@@ -422,7 +455,6 @@
       function setBoardEnabled(enabled) {
         state.joined = enabled;
 
-        focusBoardBtn.disabled = !enabled;
         newGameBtn.disabled = !enabled;
         leaveBtn.disabled = !enabled;
 
@@ -644,7 +676,6 @@
           }
         }
 
-        focusBoardBtn.disabled = !state.joined;
         newGameBtn.disabled = !state.joined;
         leaveBtn.disabled = !state.joined;
       }
@@ -774,7 +805,7 @@
           if (snap.val() === playerId) {
             await seatRef.remove();
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       async function pushStateToRoom(roomId) {
@@ -811,80 +842,80 @@
         return mover + " " + pName + " from " + result.from + " to " + result.to + capText + "." + extra;
       }
 
-async function handleActivate() {
-  const r = state.focusR;
-  const c = state.focusC;
-  const sq = rcToSq(r, c);
-  const here = game.get(sq);
+      async function handleActivate() {
+        const r = state.focusR;
+        const c = state.focusC;
+        const sq = rcToSq(r, c);
+        const here = game.get(sq);
 
-  if (!state.pickedFrom) {
-    if (!here) {
-      setStatus("Square " + sq + ". Empty.");
-      return;
-    }
+        if (!state.pickedFrom) {
+          if (!here) {
+            setStatus("Square " + sq + ". Empty.");
+            return;
+          }
 
-    if (here.color !== state.playerColor) {
-      setStatus("That piece is not yours.");
-      beepIllegal();
-      return;
-    }
+          if (here.color !== state.playerColor) {
+            setStatus("That piece is not yours.");
+            beepIllegal();
+            return;
+          }
 
-    if (game.turn() !== state.playerColor) {
-      setStatus("Not your turn.");
-      beepIllegal();
-      return;
-    }
+          if (game.turn() !== state.playerColor) {
+            setStatus("Not your turn.");
+            beepIllegal();
+            return;
+          }
 
-    state.pickedFrom = { r, c };
-    renderBoard();
-    focusCurrent();
-    setStatus("Picked up " + pieceToText(here) + " from " + sq + ".");
-    return;
-  }
+          state.pickedFrom = { r, c };
+          renderBoard();
+          focusCurrent();
+          setStatus("Picked up " + pieceToText(here) + " from " + sq + ".");
+          return;
+        }
 
-  const fromSq = rcToSq(state.pickedFrom.r, state.pickedFrom.c);
+        const fromSq = rcToSq(state.pickedFrom.r, state.pickedFrom.c);
 
-  if (fromSq === sq) {
-    cancelPickup();
-    return;
-  }
+        if (fromSq === sq) {
+          cancelPickup();
+          return;
+        }
 
-  if (!state.roomId) {
-    setStatus("Not connected to a room.");
-    beepIllegal();
-    return;
-  }
+        if (!state.roomId) {
+          setStatus("Not connected to a room.");
+          beepIllegal();
+          return;
+        }
 
-  let result;
+        let result;
 
-  try {
-    result = game.move({ from: fromSq, to: sq, promotion: "q" });
-  } catch (e) {
-    setStatus("Illegal move from " + fromSq + " to " + sq + ".");
-    beepIllegal();
-    return;
-  }
+        try {
+          result = game.move({ from: fromSq, to: sq, promotion: "q" });
+        } catch (e) {
+          setStatus("Illegal move from " + fromSq + " to " + sq + ".");
+          beepIllegal();
+          return;
+        }
 
-  state.pickedFrom = null;
-  renderBoard();
-  focusCurrent();
-  renderMovesUI();
+        state.pickedFrom = null;
+        renderBoard();
+        focusCurrent();
+        renderMovesUI();
 
-  const moveStatus = buildMoveStatus(result);
-  setStatus(moveStatus);
+        const moveStatus = buildMoveStatus(result);
+        setStatus(moveStatus);
 
-  try {
-    await pushStateToRoom(state.roomId);
-  } catch (e) {
-    game.undo();
-    state.pickedFrom = null;
-    renderBoard();
-    renderMovesUI();
-    focusCurrent();
-    setStatus("Move could not be saved to Firebase, so it was undone locally.");
-    alert("Firebase write failed: " + (e && e.message ? e.message : String(e)));
-  }
-}
+        try {
+          await pushStateToRoom(state.roomId);
+        } catch (e) {
+          game.undo();
+          state.pickedFrom = null;
+          renderBoard();
+          renderMovesUI();
+          focusCurrent();
+          setStatus("Move could not be saved to Firebase, so it was undone locally.");
+          alert("Firebase write failed: " + (e && e.message ? e.message : String(e)));
+        }
+      }
 
       function applyDisplay() {
         const root = document.documentElement;
@@ -896,7 +927,20 @@ async function handleActivate() {
         root.style.setProperty("--sq-size", sqSize + "px");
         root.style.setProperty("--piece-scale", pieceSizeSel.value);
 
-        let pageBg = "#ffffff";
+        let pageBg = "rgb(238, 232, 213)";
+
+        if (pageBgSel.value === "white") {
+          pageBg = "#ffffff";
+        } else if (pageBgSel.value === "lightgray") {
+          pageBg = "rgb(230, 230, 230)";
+        } else if (pageBgSel.value === "bluegray") {
+          pageBg = "rgb(210, 220, 230)";
+        } else if (pageBgSel.value === "darknavy") {
+          pageBg = "rgb(17, 23, 42)";
+        } else if (pageBgSel.value === "black") {
+          pageBg = "#000000";
+        }
+
         let pageText = "#000000";
         let panelBg = "#ffffff";
         let panelBorder = "#555555";
@@ -980,20 +1024,6 @@ async function handleActivate() {
         setStatus("Left room. Type a room number and activate Join.");
       }
 
-      focusBoardBtn.addEventListener("click", () => {
-        if (!state.joined) {
-          setStatus("Enter a room number and join first.");
-          roomInput.focus();
-          return;
-        }
-
-        renderBoard();
-        focusCurrent();
-
-        const sq = rcToSq(state.focusR, state.focusC);
-        const p = game.get(sq);
-        setStatus("Square " + sq + ". " + pieceToText(p) + ".");
-      });
 
       newGameBtn.addEventListener("click", async () => {
         if (!state.joined) {
@@ -1036,7 +1066,10 @@ async function handleActivate() {
       contrastSel.addEventListener("change", applyDisplay);
       sqSizeSel.addEventListener("change", applyDisplay);
       pieceSizeSel.addEventListener("change", applyDisplay);
-      soundSel.addEventListener("change", () => {});
+      pageBgSel.addEventListener("change", applyDisplay);
+      soundSel.addEventListener("change", () => {
+        setStatus("Audio " + (soundsOn() ? "on." : "off."));
+      });
 
       joinBtn.addEventListener("click", async () => {
         const raw = (roomInput.value || "").trim();
@@ -1101,14 +1134,14 @@ async function handleActivate() {
             "Joined room " + raw +
             ". You are " +
             (state.playerColor === "w" ? "white" : "black") +
-            ". Activate Focus board to begin."
+            ". Use screen reader table navigation or Tab to reach the board."
           );
 
-          focusBoardBtn.focus();
+
         } catch (e) {
           try {
             await releaseSeat(state.roomId, state.playerColor);
-          } catch (seatErr) {}
+          } catch (seatErr) { }
 
           state.roomId = "";
           safeEnableJoinUI(true);
@@ -1120,7 +1153,7 @@ async function handleActivate() {
         if (state.roomId) {
           try {
             getSeatRef(state.roomId, state.playerColor).onDisconnect().remove();
-          } catch (e) {}
+          } catch (e) { }
         }
       });
 
