@@ -290,32 +290,43 @@
           <label>
             Piece size
             <select id="pieceSizeSel">
-              <option value="0.72">Small</option>
+               <option value="0.72">Small</option>
               <option value="0.80" selected>Medium</option>
               <option value="0.88">Large</option>
             </select>
           </label>
+<label>
 
-          <label>
-            Page background
-            <select id="pageBgSel">
-              <option value="beige" selected>Soft beige</option>
-              <option value="white">White</option>
-              <option value="lightgray">Light gray</option>
-              <option value="bluegray">Blue gray</option>
-              <option value="darknavy">Dark navy</option>
-              <option value="black">Black</option>
-            </select>
-          </label>
+  Page background
+  <select id="pageBgSel">
+    <option value="beige" selected>Soft beige</option>
+    <option value="white">White</option>
+    <option value="lightgray">Light gray</option>
+    <option value="bluegray">Blue gray</option>
+    <option value="darknavy">Dark navy</option>
+    <option value="black">Black</option>
+  </select>
+</label>
 
-          <label>
-            Audio
+<label>
+  Text color
+  <select id="textColorSel">
+    <option value="black" selected>Black</option>
+    <option value="white">White</option>
+    <option value="yellow">Yellow</option>
+    <option value="softwhite">Soft white</option>
+  </select>
+</label>
 
-            <select id="soundSel">
-              <option value="on" selected>On</option>
-              <option value="off">Off</option>
-            </select>
-          </label>
+<label>
+  Audio
+
+  <select id="soundSel">
+    <option value="on" selected>On</option>
+    <option value="off">Off</option>
+  </select>
+</label>
+
         </div>
       </details>
 
@@ -368,12 +379,13 @@
       const colorSel = document.getElementById("colorSel");
       const newGameBtn = document.getElementById("newGameBtn");
 
-      const invertToggle = document.getElementById("invertToggle");
-      const contrastSel = document.getElementById("contrastSel");
-      const sqSizeSel = document.getElementById("sqSizeSel");
-      const pieceSizeSel = document.getElementById("pieceSizeSel");
-      const pageBgSel = document.getElementById("pageBgSel");
-      const soundSel = document.getElementById("soundSel");
+const invertToggle = document.getElementById("invertToggle");
+const contrastSel = document.getElementById("contrastSel");
+const sqSizeSel = document.getElementById("sqSizeSel");
+const pieceSizeSel = document.getElementById("pieceSizeSel");
+const pageBgSel = document.getElementById("pageBgSel");
+const textColorSel = document.getElementById("textColorSel");
+const soundSel = document.getElementById("soundSel");
 
       const state = {
 
@@ -941,16 +953,28 @@
           pageBg = "#000000";
         }
 
-        let pageText = "#000000";
-        let panelBg = "#ffffff";
-        let panelBorder = "#555555";
-        let focusOutline = "#000000";
-        let btnBg = "#ffffff";
-        let btnText = "#000000";
-        let btnBorder = "#555555";
+let pageText = "#000000";
+let panelBg = "#ffffff";
+let panelBorder = "#555555";
+let focusOutline = "#000000";
+let btnBg = "#ffffff";
+let btnText = "#000000";
+let btnBorder = "#555555";
 
-        let sqLight = "rgb(230, 207, 168)";
-        let sqDark = "rgb(156, 111, 74)";
+if (textColorSel.value === "white") {
+  pageText = "#ffffff";
+} else if (textColorSel.value === "yellow") {
+  pageText = "rgb(255, 255, 0)";
+} else if (textColorSel.value === "softwhite") {
+  pageText = "rgb(245, 245, 245)";
+} else {
+  pageText = "#000000";
+}
+
+btnText = pageText;
+
+let sqLight = "rgb(230, 207, 168)";
+let sqDark = "rgb(156, 111, 74)";
 
         if (contrast === "high") {
           panelBorder = "#000000";
@@ -964,15 +988,14 @@
           focusOutline = "#333333";
         }
 
-        if (invert) {
-          pageBg = "#000000";
-          pageText = "#ffffff";
-          panelBg = "#000000";
-          panelBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
-          focusOutline = "#ffffff";
-          btnBg = "#000000";
-          btnText = "#ffffff";
-          btnBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
+if (invert) {
+  pageBg = "#000000";
+  panelBg = "#000000";
+  panelBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
+  focusOutline = "#ffffff";
+  btnBg = "#000000";
+  btnText = pageText;
+  btnBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
 
           if (contrast === "high") {
             sqLight = "rgb(190, 160, 120)";
@@ -1067,6 +1090,8 @@
       sqSizeSel.addEventListener("change", applyDisplay);
       pieceSizeSel.addEventListener("change", applyDisplay);
       pageBgSel.addEventListener("change", applyDisplay);
+textColorSel.addEventListener("change", applyDisplay);
+
       soundSel.addEventListener("change", () => {
         setStatus("Audio " + (soundsOn() ? "on." : "off."));
       });
@@ -1157,11 +1182,13 @@
         }
       });
 
-      renderBoard();
-      setBoardEnabled(false);
-      setStatus("Ready. Type a room number and activate Join.");
-      roomInput.value = "";
-      roomInput.focus();
+applyDisplay();
+renderBoard();
+setBoardEnabled(false);
+setStatus("Ready. Type a room number and activate Join.");
+roomInput.value = "";
+roomInput.focus();
+
     });
   </script>
 </body>
