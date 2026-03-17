@@ -85,6 +85,14 @@
       min-width: 200px;
     }
 
+    select {
+      padding: 8px 10px;
+      border: 1px solid var(--btn-border);
+      border-radius: 10px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+    }
+
     button {
       padding: 8px 10px;
       border: 1px solid var(--btn-border);
@@ -219,9 +227,10 @@
     window.exports = window.exports || {};
   </script>
 
-  <script src="chess.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="chess.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
     if (!window.Chess && window.exports && window.exports.Chess) {
@@ -311,7 +320,8 @@
 <label>
   Text color
   <select id="textColorSel">
-    <option value="black" selected>Black</option>
+    <option value="auto" selected>Auto</option>
+    <option value="black">Black</option>
     <option value="white">White</option>
     <option value="yellow">Yellow</option>
     <option value="softwhite">Soft white</option>
@@ -352,12 +362,30 @@
         appId: "1:510129660169:web:93cc1086dce6b9034bf3d8"
       };
 
-      if (!firebase.apps || firebase.apps.length === 0) {
-        firebase.initializeApp(firebaseConfig);
-      }
+if (!firebase.apps || firebase.apps.length === 0) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-      const db = firebase.database();
-      let game = null;
+const auth = firebase.auth();
+const db = firebase.database();
+let game = null;
+let authReady = false;
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    authReady = true;
+  }
+});
+
+auth.signInAnonymously().catch((error) => {
+  const statusElEarly = document.getElementById("status");
+  if (statusElEarly) {
+    statusElEarly.textContent =
+      "Firebase anonymous sign-in failed. Check Authentication settings. " +
+      (error && error.message ? error.message : String(error));
+  }
+});
+
 
       if (!window.Chess) {
         const statusElEarly = document.getElementById("status");
@@ -571,6 +599,16 @@ const soundSel = document.getElementById("soundSel");
           movesEl.appendChild(li);
         }
       }
+
+function adjustTextColorForBackground(r, g, b) {
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+  if (brightness > 150) {
+    return "rgb(0, 0, 0)";
+  } else {
+    return "rgb(255, 255, 255)";
+  }
+}
 
       function renderBoard() {
         if (!state.sqBtns) {
@@ -939,63 +977,104 @@ const soundSel = document.getElementById("soundSel");
         root.style.setProperty("--sq-size", sqSize + "px");
         root.style.setProperty("--piece-scale", pieceSizeSel.value);
 
+        let bgR = 238;
+        let bgG = 232;
+        let bgB = 213;
+
         let pageBg = "rgb(238, 232, 213)";
+        let panelBg = "rgb(220, 210, 190)";
+        let btnBg = "rgb(220, 210, 190)";
+        let panelBorder = "#555555";
+        let btnBorder = "#555555";
+        let focusOutline = "#000000";
 
         if (pageBgSel.value === "white") {
-          pageBg = "#ffffff";
+          bgR = 255;
+          bgG = 255;
+          bgB = 255;
+          pageBg = "rgb(255, 255, 255)";
+          panelBg = "rgb(230, 230, 230)";
+          btnBg = "rgb(230, 230, 230)";
         } else if (pageBgSel.value === "lightgray") {
+          bgR = 230;
+          bgG = 230;
+          bgB = 230;
           pageBg = "rgb(230, 230, 230)";
+          panelBg = "rgb(205, 205, 205)";
+          btnBg = "rgb(205, 205, 205)";
         } else if (pageBgSel.value === "bluegray") {
+          bgR = 210;
+          bgG = 220;
+          bgB = 230;
           pageBg = "rgb(210, 220, 230)";
+          panelBg = "rgb(185, 195, 205)";
+          btnBg = "rgb(185, 195, 205)";
         } else if (pageBgSel.value === "darknavy") {
+          bgR = 17;
+          bgG = 23;
+          bgB = 42;
           pageBg = "rgb(17, 23, 42)";
+          panelBg = "rgb(70, 70, 70)";
+          btnBg = "rgb(70, 70, 70)";
+          panelBorder = "#aaaaaa";
+          btnBorder = "#aaaaaa";
+          focusOutline = "#ffffff";
         } else if (pageBgSel.value === "black") {
-          pageBg = "#000000";
+          bgR = 0;
+          bgG = 0;
+          bgB = 0;
+          pageBg = "rgb(0, 0, 0)";
+          panelBg = "rgb(90, 90, 90)";
+          btnBg = "rgb(90, 90, 90)";
+          panelBorder = "#cccccc";
+          btnBorder = "#cccccc";
+          focusOutline = "#ffffff";
         }
 
-let pageText = "#000000";
-let panelBg = "#ffffff";
-let panelBorder = "#555555";
-let focusOutline = "#000000";
-let btnBg = "#ffffff";
-let btnText = "#000000";
-let btnBorder = "#555555";
+        let pageText = "#000000";
 
-if (textColorSel.value === "white") {
-  pageText = "#ffffff";
-} else if (textColorSel.value === "yellow") {
-  pageText = "rgb(255, 255, 0)";
-} else if (textColorSel.value === "softwhite") {
-  pageText = "rgb(245, 245, 245)";
-} else {
-  pageText = "#000000";
-}
+        if (textColorSel.value === "auto") {
+          pageText = adjustTextColorForBackground(bgR, bgG, bgB);
+        } else if (textColorSel.value === "white") {
+          pageText = "#ffffff";
+        } else if (textColorSel.value === "yellow") {
+          pageText = "rgb(255, 255, 0)";
+        } else if (textColorSel.value === "softwhite") {
+          pageText = "rgb(245, 245, 245)";
+        } else {
+          pageText = "#000000";
+        }
 
-btnText = pageText;
+        let btnText = pageText;
 
-let sqLight = "rgb(230, 207, 168)";
-let sqDark = "rgb(156, 111, 74)";
+        let sqLight = "rgb(230, 207, 168)";
+        let sqDark = "rgb(156, 111, 74)";
 
         if (contrast === "high") {
-          panelBorder = "#000000";
-          btnBorder = "#000000";
-          focusOutline = "#000000";
+          panelBorder = (pageBgSel.value === "darknavy" || pageBgSel.value === "black") ? "#ffffff" : "#000000";
+          btnBorder = (pageBgSel.value === "darknavy" || pageBgSel.value === "black") ? "#ffffff" : "#000000";
+          focusOutline = (pageBgSel.value === "darknavy" || pageBgSel.value === "black") ? "#ffffff" : "#000000";
         }
 
         if (contrast === "low") {
-          panelBorder = "#777777";
-          btnBorder = "#777777";
-          focusOutline = "#333333";
+          panelBorder = (pageBgSel.value === "darknavy" || pageBgSel.value === "black") ? "#888888" : "#777777";
+          btnBorder = (pageBgSel.value === "darknavy" || pageBgSel.value === "black") ? "#888888" : "#777777";
+          focusOutline = (pageBgSel.value === "darknavy" || pageBgSel.value === "black") ? "#bbbbbb" : "#333333";
         }
 
-if (invert) {
-  pageBg = "#000000";
-  panelBg = "#000000";
-  panelBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
-  focusOutline = "#ffffff";
-  btnBg = "#000000";
-  btnText = pageText;
-  btnBorder = (contrast === "high") ? "#ffffff" : "#aaaaaa";
+        if (invert) {
+          pageBg = "#000000";
+          panelBg = "rgb(90, 90, 90)";
+          btnBg = "rgb(90, 90, 90)";
+          panelBorder = (contrast === "high") ? "#ffffff" : "#cccccc";
+          btnBorder = (contrast === "high") ? "#ffffff" : "#cccccc";
+          focusOutline = "#ffffff";
+
+          if (textColorSel.value === "auto") {
+            pageText = "rgb(255, 255, 255)";
+          }
+
+          btnText = pageText;
 
           if (contrast === "high") {
             sqLight = "rgb(190, 160, 120)";
@@ -1096,8 +1175,13 @@ textColorSel.addEventListener("change", applyDisplay);
         setStatus("Audio " + (soundsOn() ? "on." : "off."));
       });
 
-      joinBtn.addEventListener("click", async () => {
-        const raw = (roomInput.value || "").trim();
+joinBtn.addEventListener("click", async () => {
+  if (!authReady) {
+    setStatus("Still connecting to Firebase authentication. Please try Join again in a moment.");
+    return;
+  }
+
+  const raw = (roomInput.value || "").trim();
 
         if (!raw) {
           setStatus("Please enter a room number.");
